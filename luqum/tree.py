@@ -86,10 +86,8 @@ class Item(object):
         """
         if len(value) != len(self._children_attrs):
             num_children = len(value) if value else "no"
-            raise ValueError(
-                f"{type(self)} accepts {num_children} children,"
-                f" and you try to set {len(value)} children"
-            )
+            raise ValueError("{type} accepts {num_children} children, and you try to set {len_value} children".
+                             format(type=type(self), num_children=num_children, len_value=len(value)))
         for attr, v in zip(self._children_attrs, value):
             setattr(self, attr, v)
 
@@ -160,7 +158,8 @@ class SearchField(Item):
     def __init__(self, name, expr, **kwargs):
         self.name = name
         self.expr = expr
-        super().__init__(**kwargs)
+        super(SearchField, self).__init__(**kwargs)
+        # super().__init__(**kwargs)
 
     def __str__(self, head_tail=False):
         value = self.name + ":" + self.expr.__str__(head_tail=True)
@@ -179,7 +178,8 @@ class BaseGroup(Item):
 
     def __init__(self, expr, **kwargs):
         self.expr = expr
-        super().__init__(**kwargs)
+        super(BaseGroup, self).__init__(**kwargs)
+        # super().__init__(**kwargs)
 
     def __str__(self, head_tail=False):
         value = "(%s)" % self.expr.__str__(head_tail=True)
@@ -220,7 +220,8 @@ class Range(Item):
         self.high = high
         self.include_low = include_low
         self.include_high = include_high
-        super().__init__(**kwargs)
+        super(Range, self).__init__(**kwargs)
+        # super().__init__(**kwargs)
 
     def __str__(self, head_tail=False):
         value = "%s%sTO%s%s" % (
@@ -245,7 +246,8 @@ class Term(Item):
 
     def __init__(self, value, **kwargs):
         self.value = value
-        super().__init__(**kwargs)
+        super(Term, self).__init__(**kwargs)
+        # super().__init__(**kwargs)
 
     @property
     def unescaped_value(self):
@@ -320,7 +322,8 @@ class BaseApprox(Item):
         self.term = term
         self._implicit_degree = degree is None  # this is just for display
         self.degree = self._normalize_degree(degree)
-        super().__init__(**kwargs)
+        super(BaseApprox, self).__init__(**kwargs)
+        # super().__init__(**kwargs)
 
     def __repr__(self):
         return "%s(%s, %s)" % (self.__class__.__name__, self.term.__repr__(), self.degree)
@@ -372,7 +375,8 @@ class Boost(Item):
     def __init__(self, expr, force, **kwargs):
         self.expr = expr
         self.force = Decimal(force).normalize()
-        super().__init__(**kwargs)
+        super(Boost, self).__init__(**kwargs)
+        # super().__init__(**kwargs)
 
     def __repr__(self):
         return "%s(%s, %s)" % (self.__class__.__name__, self.expr.__repr__(), self.force)
@@ -392,7 +396,8 @@ class BaseOperation(Item):
 
     def __init__(self, *operands, **kwargs):
         self.operands = operands
-        super().__init__(**kwargs)
+        super(BaseOperation, self).__init__(**kwargs)
+        # super().__init__(**kwargs)
 
     def __str__(self, head_tail=False):
         value = ("%s" % self.op).join(o.__str__(head_tail=True) for o in self.operands)
@@ -465,7 +470,8 @@ class Unary(Item):
 
     def __init__(self, a, **kwargs):
         self.a = a
-        super().__init__(**kwargs)
+        super(Unary, self).__init__(**kwargs)
+        # super().__init__(**kwargs)
 
     def __str__(self, head_tail=False):
         value = "%s%s" % (self.op, self.a.__str__(head_tail=True))

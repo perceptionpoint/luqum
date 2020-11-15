@@ -2,7 +2,7 @@
 """
 
 
-class SchemaAnalyzer:
+class SchemaAnalyzer(object):
     """An helper that analyze ElasticSearch schema, to give you suitable options
     to use when transforming queries.
 
@@ -43,11 +43,15 @@ class SchemaAnalyzer:
             inner_properties = fdef.get("properties", {})
             if inner_properties:
                 new_parents = parents + [(fname, fdef)]
-                yield from self._walk_properties(inner_properties, new_parents, subfields)
+                for prop in self._walk_properties(inner_properties, new_parents, subfields):
+                    yield prop
+                # yield from self._walk_properties(inner_properties, new_parents, subfields)
 
     def iter_fields(self, subfields=False):
         for mapping in self.mappings.values():
-            yield from self._walk_properties(mapping.get("properties", {}), subfields=subfields)
+            for prop in self._walk_properties(mapping.get("properties", {}), subfields=subfields):
+                yield prop
+            # yield from self._walk_properties(mapping.get("properties", {}), subfields=subfields)
 
     def not_analyzed_fields(self):
         for fname, fdef, parents in self.iter_fields(subfields=True):

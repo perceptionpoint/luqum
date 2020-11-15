@@ -9,7 +9,7 @@ def camel_to_lower(name):
         for w in name).lstrip("_")
 
 
-class TreeVisitor:
+class TreeVisitor(object):
     """
     Tree Visitor base class.
 
@@ -63,6 +63,19 @@ class TreeVisitor:
             self._get_method_cache[type(node)] = meth
         return meth
 
+    def visit_iter(self, node, context):
+        """
+        Basic, recursive traversal of the tree.
+
+        :param list parents: the list of parents
+        :param dict context: a dict of contextual variable for free use
+            to track states while traversing the tree (eg. the current field name)
+        """
+        method = self._get_method(node)
+        for obj in method(node, context):
+            yield obj
+        # yield from method(node, context)
+
     def visit(self, tree, context=None):
         """Traversal of tree
 
@@ -79,17 +92,6 @@ class TreeVisitor:
             context = {}
         return list(self.visit_iter(tree, context=context))
 
-    def visit_iter(self, node, context):
-        """
-        Basic, recursive traversal of the tree.
-
-        :param list parents: the list of parents
-        :param dict context: a dict of contextual variable for free use
-            to track states while traversing the tree (eg. the current field name)
-        """
-        method = self._get_method(node)
-        yield from method(node, context)
-
     def generic_visit(self, node, context):
         """
         Default visitor function, called if nothing matches the current node.
@@ -101,7 +103,9 @@ class TreeVisitor:
         else:
             child_context = context
         for child in node.children:
-            yield from self.visit_iter(child, context=child_context)
+            for obj in self.visit_iter(child, context=child_context):
+                yield obj
+            # yield from self.visit_iter(child, context=child_context)
 
 
 class TreeTransformer(TreeVisitor):
@@ -113,7 +117,8 @@ class TreeTransformer(TreeVisitor):
 
     def __init__(self, track_new_parents=False, **kwargs):
         self.track_new_parents = track_new_parents
-        super().__init__(**kwargs)
+        super(TreeTransformer, self).__init__(**kwargs)
+        # super().__init__(**kwargs)
 
     def visit(self, tree, context=None):
         if context is None:
@@ -127,7 +132,7 @@ class TreeTransformer(TreeVisitor):
                     "The visit of the tree should have produced exactly one element "
                     "(the transformed tree)"
                 )
-                raise exc from e
+                raise exc
             else:
                 raise
 

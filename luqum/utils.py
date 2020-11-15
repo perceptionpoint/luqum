@@ -31,7 +31,8 @@ class UnknownOperationResolver(visitor.TreeTransformer):
             raise ValueError("%r is not a valid value for resolve_to" % resolve_to)
         self.resolve_to = resolve_to
         self.add_head = add_head
-        super().__init__(track_parents=True)
+        super(UnknownOperationResolver, self).__init__(track_parents=True)
+        # super().__init__(track_parents=True)
 
     def _last_operation(self, context):
         return context.setdefault("last_operation", {})
@@ -45,7 +46,7 @@ class UnknownOperationResolver(visitor.TreeTransformer):
 
     def _track_last_op(self, node, context):
         if self.resolve_to is None:
-            # next unknow operation at same level should resolve to my type of operation
+            # next unknown operation at same level should resolve to my type of operation
             # so track it
             parent = self._first_nonop_parent(context.get("parents", []))
             self._last_operation(context)[parent] = type(node)
@@ -57,11 +58,15 @@ class UnknownOperationResolver(visitor.TreeTransformer):
 
     def visit_or_operation(self, node, context):
         self._track_last_op(node, context)
-        yield from self.generic_visit(node, context)
+        for obj in self.generic_visit(node, context):
+            yield obj
+        # yield from self.generic_visit(node, context)
 
     def visit_and_operation(self, node, context):
         self._track_last_op(node, context)
-        yield from self.generic_visit(node, context)
+        for obj in self.generic_visit(node, context):
+            yield obj
+        # yield from self.generic_visit(node, context)
 
     def visit_unknown_operation(self, node, context):
         # resolve

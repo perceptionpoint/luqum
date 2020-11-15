@@ -23,13 +23,17 @@ def _check_children(f):
     """
     @functools.wraps(f)
     def wrapper(self, item, parents):
-        yield from f(self, item, parents)
+        for o in f(self, item, parents):
+            yield f
+        # yield from f(self, item, parents)
         for child in item.children:
-            yield from self.check(child, parents + [item])
+            for checked_obj in self.check(child, parents + [item]):
+                yield checked_obj
+            # yield from self.check(child, parents + [item])
     return wrapper
 
 
-class LuceneCheck:
+class LuceneCheck(object):
     """Check if a query is consistent
 
     This is intended to use with query constructed as tree,
@@ -117,12 +121,15 @@ class LuceneCheck:
     def check_prohibit(self, item, parents):
         return self._check_not_operator(item, parents)
 
-    def check(self, item, parents=[]):
+    def check(self, item, parents=None):
+        parents = parents or []
         # dispatching check to anothe method
         for cls in item.__class__.mro():
             meth = getattr(self, "check_" + camel_to_lower(cls.__name__), None)
             if meth is not None:
-                yield from meth(item, parents)
+                for o in meth(item, parents):
+                    yield o
+                # yield from meth(item, parents)
                 break
         else:
             yield "Unknown item type %s : %s" % (item.__class__.__name__, str(item))
@@ -159,7 +166,8 @@ class CheckNestedFields(visitor.TreeVisitor):
         self.nested_fields = flatten_nested_fields_specs(nested_fields)
         self.nested_prefixes = set(k.rsplit(".", 1)[0] for k in self.nested_fields)
         self.sub_fields = normalize_object_fields_specs(sub_fields)
-        super().__init__(track_parents=True)
+        super(CheckNestedFields, self).__init__(track_parents=True)
+        # super().__init__(track_parents=True)
 
     def visit_search_field(self, node, context):
         """
@@ -167,7 +175,9 @@ class CheckNestedFields(visitor.TreeVisitor):
         """
         child_context = dict(context)  # copy
         child_context["prefix"] = context["prefix"] + node.name.split(".")
-        yield from self.generic_visit(node, child_context)
+        for visited_node in self.generic_visit(node, child_context):
+            yield visited_node
+        # yield from self.generic_visit(node, child_context)
 
     def _check_final_operation(self, node, context):
         prefix = context["prefix"]

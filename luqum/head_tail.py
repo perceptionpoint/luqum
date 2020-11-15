@@ -5,7 +5,7 @@ The scope is to avoid loosing part of the original text in the final tree.
 from .tree import Item
 
 
-class TokenValue:
+class TokenValue(object):
 
     def __init__(self, value):
         self.value = value
@@ -21,7 +21,7 @@ class TokenValue:
         return self.value
 
 
-class HeadTailLexer:
+class HeadTailLexer(object):
     """Utility to handle head and tail at lexer time.
     """
 
@@ -88,7 +88,7 @@ class HeadTailLexer:
 token_headtail = HeadTailLexer.handle
 
 
-class HeadTailManager:
+class HeadTailManager(object):
     """Utility to hande head and tail at expression parse time
     """
 

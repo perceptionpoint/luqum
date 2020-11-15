@@ -24,14 +24,17 @@ class TreeAutoNamer(TreeVisitor):
     # helper for :py:func:`tree_name_index`
 
     def __init__(self):
-        super().__init__(track_parents=False)
+        super(TreeAutoNamer, self).__init__(track_parents=False)
+        # super().__init__(track_parents=False)
 
     def visit_base_operation(self, node, context):
         # operations are the splitting point, we name them and make children subnames
         names = context["names"]
         set_name(node, ("_".join(names)))
         for i, c in enumerate(node.children):
-            yield from self.visit_iter(c, context={"names": names + [str(i)]})
+            for visit in self.visit_iter(c, context={"names": names + [str(i)]}):
+                yield visit
+            # yield from self.visit_iter(c, context={"names": names + [str(i)]})
 
     def visit_term(self, node, context=None):
         names = context["names"]
@@ -61,11 +64,13 @@ class NameIndexer(TreeVisitor):
     # helper for :py:func:`tree_name_index`
 
     def __init__(self):
-        super().__init__(track_parents=True)
+        super(NameIndexer, self).__init__(track_parents=True)
+        # super().__init__(track_parents=True)
 
     def generic_visit(self, node, context):
         # visit children
-        sub_names = list(super().generic_visit(node, context))
+        sub_names = list(super(NameIndexer, self).generic_visit(node, context))
+        # sub_names = list(super().generic_visit(node, context))
         name = get_name(node)
         root_node = not context.get("parents")
         if name is not None or root_node:
@@ -80,7 +85,9 @@ class NameIndexer(TreeVisitor):
                     subnodes_pos.append((subname, pos, length, sub_subnodes_pos))
                     idx = pos + length
             sub_names = [(name, str_repr, subnodes_pos)]
-        yield from sub_names
+        for sub_name in sub_names:
+            yield sub_name
+        # yield from sub_names
 
     def __call__(self, node):
         subnames = self.visit(node)
@@ -95,7 +102,9 @@ class NameIndexer(TreeVisitor):
 def _flatten_name_index(subnodes_pos, start_pos=0):
     for name, pos, length, children in subnodes_pos:
         yield name, start_pos + pos, length
-        yield from _flatten_name_index(children, start_pos + pos)
+        for flattened_name_index in _flatten_name_index(children, start_pos + pos):
+            yield flattened_name_index
+        # yield from _flatten_name_index(children, start_pos + pos)
 
 
 def name_index(tree):

@@ -2,7 +2,7 @@ import abc
 import re
 
 
-class JsonSerializableMixin:
+class JsonSerializableMixin(object):
     """
     Mixin to force subclasses to implement the json method
     """
@@ -25,9 +25,9 @@ class AbstractEItem(JsonSerializableMixin):
     _KEYS_TO_ADD = ('boost', 'fuzziness', '_name')
     ADDITIONAL_KEYS_TO_ADD = ()
 
-    def __init__(self, no_analyze=None, method='term', fields=[], _name=None, field_options=None):
+    def __init__(self, no_analyze=None, method='term', fields=None, _name=None, field_options=None):
         self._method = method
-        self._fields = fields
+        self._fields = fields or []
         self._no_analyze = no_analyze if no_analyze else []
         self.zero_terms_query = 'none'
         self.field_options = field_options or {}
@@ -119,7 +119,8 @@ class EWord(AbstractEItem):
     ADDITIONAL_KEYS_TO_ADD = ('q', )
 
     def __init__(self, q, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(EWord, self).__init__(*args, **kwargs)
+        # super().__init__(*args, **kwargs)
         self.q = q
 
     @property
@@ -127,7 +128,8 @@ class EWord(AbstractEItem):
         # field:* is transformed to exists query
         if self.q == '*':
             return {"exists": {"field": self.field}}
-        return super().json
+        return  super(EWord, self).json
+        # return super().json
 
 
 class EPhrase(AbstractEItem):
@@ -146,7 +148,8 @@ class EPhrase(AbstractEItem):
     _proximity = None
 
     def __init__(self, phrase, *args, **kwargs):
-        super().__init__(method='match_phrase', *args, **kwargs)
+        super(EPhrase, self).__init__(method='match_phrase', *args, **kwargs)
+        # super().__init__(method='match_phrase', *args, **kwargs)
         phrase = self._replace_CR_and_LF_by_a_whitespace(phrase)
         self.q = self._remove_double_quotes(phrase)
 
@@ -186,7 +189,8 @@ class ERange(AbstractEItem):
     """
 
     def __init__(self, lt=None, lte=None, gt=None, gte=None, *args, **kwargs):
-        super().__init__(method='range', *args, **kwargs)
+        super(ERange, self).__init__(method='range', *args, **kwargs)
+        # super().__init__(method='range', *args, **kwargs)
         if lt and lt != '*':
             self.lt = lt
             self.ADDITIONAL_KEYS_TO_ADD += ('lt', )
@@ -317,7 +321,8 @@ class EShould(EOperation):
 class AbstractEMustOperation(EOperation):
 
     def __init__(self, items, **options):
-        op = super().__init__(items, **options)
+        op = super(AbstractEMustOperation, self).__init__(items, **options)
+        # op = super().__init__(items, **options)
         for item in self.items:
             item.zero_terms_query = self.zero_terms_query
         return op
@@ -365,7 +370,7 @@ class EMustNot(AbstractEMustOperation):
     operation = 'must_not'
 
 
-class ElasticSearchItemFactory:
+class ElasticSearchItemFactory(object):
     """
     Factory to preconfigure EItems and EOperation
 

@@ -8,7 +8,7 @@ import warnings
 from .visitor import camel_to_lower
 
 
-class LuceneTreeVisitor:
+class LuceneTreeVisitor(object):
     """
     Tree Visitor base class, inspired by python's :class:`ast.NodeVisitor`.
 
@@ -59,9 +59,13 @@ class LuceneTreeVisitor:
         )
         parents = parents or []
         method = self._get_method(node)
-        yield from method(node, parents)
+        for obj in method(node, parents):
+            yield obj
+        # yield from method(node, parents)
         for child in node.children:
-            yield from self.visit(child, parents + [node])
+            for visited_obj in self.visit(child, parents + [node]):
+                yield visited_obj
+            # yield from self.visit(child, parents + [node])
 
     def generic_visit(self, node, parents=None):
         """

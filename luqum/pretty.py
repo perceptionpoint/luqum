@@ -4,7 +4,7 @@
 from .tree import BaseOperation, BaseGroup, SearchField
 
 
-class _StickMarker:
+class _StickMarker(object):
     """Use in list between two elements that must stick together
     """
 
@@ -47,7 +47,9 @@ class Prettifier(object):
                 # same level, this is just associativity
                 num_children = len(element.children)
                 for n, child in enumerate(element.children):
-                    yield from self._get_chains(child, element)
+                    for chain in self._get_chains(child, element):
+                        yield chain
+                    # yield from self._get_chains(child, element)
                     if n < num_children - 1:
                         if self.inline_ops:
                             yield _STICK_MARKER
@@ -76,7 +78,9 @@ class Prettifier(object):
             # use recursion on sub expression
             yield element.name + ":"
             yield _STICK_MARKER
-            yield from self._get_chains(element.expr, element)
+            for chain in self._get_chains(element.expr, element):
+                yield chain
+            # yield from self._get_chains(element.expr, element)
         else:
             # simple element
             yield str(element)
