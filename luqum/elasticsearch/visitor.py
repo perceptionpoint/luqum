@@ -91,7 +91,8 @@ class ElasticsearchQueryBuilder(TreeVisitor):
             see :py:meth:`luqum.elasticsearch.schema.SchemaAnalyzer.query_builder_options`
 
         """
-        super().__init__(track_parents=True)
+        super(ElasticsearchQueryBuilder, self).__init__(track_parents=True)
+        # super().__init__(track_parents=True)
         if not_analyzed_fields:
             self._not_analyzed_fields = not_analyzed_fields
         else:
@@ -177,7 +178,9 @@ class ElasticsearchQueryBuilder(TreeVisitor):
         """
         for child in children:
             if type(child) is type(current_node):
-                yield from self.simplify_if_same(child.children, current_node)
+                for simple_child in self.simplify_if_same(child.children, current_node):
+                    yield simple_child
+                # yield from self.simplify_if_same(child.children, current_node)
             else:
                 yield child
 
@@ -273,7 +276,8 @@ class ElasticsearchQueryBuilder(TreeVisitor):
     def _binary_operation(self, cls, node, context):
         children = self.simplify_if_same(node.children, node)
         children = self._yield_nested_children(node, children)
-        (visit_iter) = super().visit_iter  # can't use super inside the comprehension expression
+        (visit_iter) = super(ElasticsearchQueryBuilder, self).visit_iter
+        # (visit_iter) = super().visit_iter  # can't use super inside the comprehension expression
         items = [
             item
             for child in children
@@ -282,16 +286,24 @@ class ElasticsearchQueryBuilder(TreeVisitor):
         yield self.es_item_factory.build(cls, items)
 
     def _must_operation(self, *args, **kwargs):
-        yield from self._binary_operation(EMust, *args, **kwargs)
+        for obj in self._binary_operation(EMust, *args, **kwargs):
+            yield obj
+        # yield from self._binary_operation(EMust, *args, **kwargs)
 
     def _should_operation(self, *args, **kwargs):
-        yield from self._binary_operation(EShould, *args, **kwargs)
+        for obj in self._binary_operation(EShould, *args, **kwargs):
+            yield obj
+        # yield from self._binary_operation(EShould, *args, **kwargs)
 
     def visit_and_operation(self, *args, **kwargs):
-        yield from self._must_operation(*args, **kwargs)
+        for obj in self._must_operation(*args, **kwargs):
+            yield obj
+        # yield from self._must_operation(*args, **kwargs)
 
     def visit_or_operation(self, *args, **kwargs):
-        yield from self._should_operation(*args, **kwargs)
+        for obj in self._should_operation(*args, **kwargs):
+            yield obj
+        # yield from self._should_operation(*args, **kwargs)
 
     def visit_search_field(self, node, context):
         # put prefix (for nested fields) and name of field in context
@@ -318,29 +330,40 @@ class ElasticsearchQueryBuilder(TreeVisitor):
         yield self.es_item_factory.build(EMustNot, items)
 
     def visit_prohibit(self, *args, **kwargs):
-        yield from self.visit_not(*args, **kwargs)
+        for obj in self.visit_not(*args, **kwargs):
+            yield obj
+        # yield from self.visit_not(*args, **kwargs)
 
     def visit_plus(self, *args, **kwargs):
-        yield from self._must_operation(*args, **kwargs)
+        for obj in self._must_operation(*args, **kwargs):
+            yield obj
+        # yield from self._must_operation(*args, **kwargs)
 
     def visit_unknown_operation(self, *args, **kwargs):
         if self.default_operator == self.SHOULD:
-            yield from self._should_operation(*args, **kwargs)
+            for obj in self._should_operation(*args, **kwargs):
+                yield obj
+            # yield from self._should_operation(*args, **kwargs)
         else:
-            yield from self._must_operation(*args, **kwargs)
+            for obj in self._must_operation(*args, **kwargs):
+                yield obj
+            # yield from self._must_operation(*args, **kwargs)
 
     def visit_boost(self, node, context):
-        eword, = super().generic_visit(node, context)
+        eword, = super(ElasticsearchQueryBuilder, self).generic_visit(node, context)
+        # eword, = super().generic_visit(node, context)
         eword.boost = float(node.force)
         yield eword
 
     def visit_fuzzy(self, node, context):
-        eword, = super().generic_visit(node, context)
+        eword, = super(ElasticsearchQueryBuilder, self).generic_visit(node, context)
+        # eword, = super().generic_visit(node, context)
         eword.fuzziness = float(node.degree)
         yield eword
 
     def visit_proximity(self, node, context):
-        ephrase, = super().generic_visit(node, context)
+        ephrase, = super(ElasticsearchQueryBuilder, self).generic_visit(node, context)
+        # ephrase, = super().generic_visit(node, context)
         if self._is_analyzed(context):
             ephrase.slop = float(node.degree)
         else:
